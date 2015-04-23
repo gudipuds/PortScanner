@@ -1,0 +1,87 @@
+PROJECT 4: PORT SCANNER
+
+**************************
+
+Name  : Avinash Ravi
+uname : avinravi
+
+Name  : Sravya Gudipudi
+uname : sgudipud
+
+**************************
+
+
+What's in the code?
+---------------------
+The main objective  of this project is  to scan various ports on a specified ip/ip's and derive
+conclusions on the scanned ports. 
+The implementation of PortScanner is as follows:
+
+As the program starts, it parses  the command line arguments and creates a job queue with ip+port 
+values in the queue. It then starts a thread to capture all the  incoming packets using libpcap  
+and stores it in a map.  Then it starts a thread/threads to perform scanning using TCP SYN, TCP 
+NULL,  TCP ACK, TCP FIN,  TCP XMAS, UDP scans on the ports of the specified host. These threads
+pick up the work  from the job queue.For every scan,  it creates a  packet by populating the IP 
+and TCP header values and calculates the TCP and IP header checksums. Now a raw socket connection 
+is  opened and the manually  created packet is sent to the destination. Once the packet is sent, 
+it keeps checking libpcap  instance for  any packet  received  from the destination until a time 
+out occurs. If no packet is received, it then retransmits the packet and waits for response. The 
+program retransmits a  packet for  three times  and if no response is received from the host, it 
+moves onto the next port. If a response is seen  in libpcap instance, it checks the TCP/ICMP/UDP 
+header to derive the conclusion based on the response received. Once all the specified scans are 
+performed, it derives a conclusion based on all the responses received. The same process is repeated 
+for all the  ports of  all the specified hosts. Once all the scanning is complete, final results 
+are printed.
+
+To scan a  DNS port using UDP scan, DNS headers are created manually and DNS specific payload is
+added to the packet and sent over datagram sockets.  It also verifies if SSH, HTTP, SMTP, POP, IMAP
+, WHOIS are running the expected  services by  sending appropriate queries over datagram sockets
+and analysing the responses.
+
+
+Tasks Accomplished
+---------------------
+-> Running a background thread to capture all incoming packets using libpcap.
+-> Performing TCP SYN, NULL, FIN, XMAS, ACK and UDP scans.
+-> Sending manually created packets to scan the ports on the destination.
+-> Parsing IP, TCP, UDP, ICMP headers of the received packets to analyse the response from hosts.
+-> Deriving conclusion on a port of a host based on the results obtained from different scans.
+-> Verifying if HTTP, SSH, SMTP, POP, IMAP and WHOIS are running these services on their respective ports.
+
+Files in the Project
+---------------------
+ps_setup.cpp      :      Contains setup code, such as parsing arguments
+ps_setup.h        :      Header file for ps_setup
+
+ps_helper.cpp     :      Contains hard coded values of port names of 1 - 1-24 ports
+ps_helper.h       :      Header file for ps_helper
+
+ps_lib.cpp        :      Contains functions necessary to support portScanner 
+ps_lib.h          :      Header file for ps_lib
+
+ps_pcap.cpp       :      Contains code to start a libpcap instance and capture incoming packets
+ps_pcap.h         :      Header file for ps_pcap
+
+portScanner.cpp   :      Contains code for creating threads and scanning ports 
+
+
+Compiling the Code
+---------------------
+The code compilation can be done using the Makefile as 
+  gmake all
+When compiling using gmake, the executable is stored in portScanner.
+
+
+Execution and Interpretation of Output
+---------------------------------------
+This program can be executed as 
+./portScanner --ip <ip_address> --ports <ports to scan> --prefix <Ip Prefix to scan> --file <FileName> --speedup <no_of_threads> --scan <scan_options>
+Eg: ./portScanner --ip 129.79.247.87 --ports 22-53 --speedup 5 --scan UDP SYN ACK
+
+Here, FileName is the name of the file that contains a list of ip addresses.
+One of ip, prefix, file options must be specified. All the other options are optional. 
+If no ports are specified, 1-1024 ports are scanned by default.
+All the scans are performed unless a scan option is specified.
+By default, only a single instance of program scans the ports. If the speedup option is 
+specified, it creates the no of threads specified in speedup option. This program limits 
+the maximum number of threads to be specified in speedup option to 30.
